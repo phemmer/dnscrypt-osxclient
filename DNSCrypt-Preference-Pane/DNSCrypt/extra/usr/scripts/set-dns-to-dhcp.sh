@@ -2,25 +2,23 @@
 
 . ./common.inc
 
+get_primary_service() {
+  scutil <<EOF | awk '$1 == "PrimaryService" { print $3 }'
+show State:/Network/Global/IPv4
+EOF
+}
+
 servers='empty'
 
 logger_debug "Changing the DNS configuration to use the default DNS resolvers"
 
-if [ -r "$STATIC_RESOLVERS_FILE" ]; then
-  servers=''
-  while read server; do
-    case "$server" in
-      [0-9a-fA-F:.]*) servers="${servers} ${server}" ;;
-    esac
-  done < "$STATIC_RESOLVERS_FILE"
-  [ -z "$servers" ] && servers='empty'
-  logger_debug "Static list of DNS resolvers: [$servers]"
-fi
-
-exec networksetup -listallnetworkservices 2>/dev/null | \
-fgrep -v '*' | while read x ; do
-  networksetup -setdnsservers "$x" $servers > /dev/null
-done
+service="$(get_primary_service)"
+scutil <<EOF
+get State:/Network/Service/$service/DNS
+get State:/Network/Service/$service/DNS.dnscryptbackup
+set State:/Network/Service/$service/DNS
+remove State:/Network/Service/$service/DNS.dnscryptbackup
+EOF
 
 logger_debug "Flushing the local DNS cache"
 

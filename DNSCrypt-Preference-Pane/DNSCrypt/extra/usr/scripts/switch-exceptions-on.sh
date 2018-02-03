@@ -14,7 +14,7 @@ get_gw() {
 }
 
 get_dhcp_dns() {
-  cat "$DHCP_DNS_FILE" 2> /dev/null | egrep -i '^[0-9a-f:.]+$'
+  ./get-dhcp-resolvers.sh
 }
 
 [ -s "$EXCEPTIONS_FILE" ] || exec ./switch-exceptions-off.sh
